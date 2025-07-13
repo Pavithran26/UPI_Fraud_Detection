@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Test Transaction - UPI Fraud Detection{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-10">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-vial me-2"></i>
+                    Test Transaction for Fraud Detection
+                </h3>
+                <p class="text-muted mb-0 mt-2">Enter transaction details to analyze potential fraud risk</p>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" class="transaction-form">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <!-- Amount -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.amount.id }}" class="form-label fw-medium">
+                                <i class="fas fa-rupee-sign me-1"></i>Transaction Amount *
+                            </label>
+                            {{ form.amount(class="form-control form-control-lg") }}
+                            {% if form.amount.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.amount.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Transaction Type -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.transaction_type.id }}" class="form-label fw-medium">
+                                <i class="fas fa-exchange-alt me-1"></i>Transaction Type *
+                            </label>
+                            {{ form.transaction_type(class="form-select form-select-lg") }}
+                            {% if form.transaction_type.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.transaction_type.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Sender ID -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.sender_id.id }}" class="form-label fw-medium">
+                                <i class="fas fa-user me-1"></i>Sender UPI ID *
+                            </label>
+                            {{ form.sender_id(class="form-control") }}
+                            {% if form.sender_id.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.sender_id.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Receiver ID -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.receiver_id.id }}" class="form-label fw-medium">
+                                <i class="fas fa-user-check me-1"></i>Receiver UPI ID *
+                            </label>
+                            {{ form.receiver_id(class="form-control") }}
+                            {% if form.receiver_id.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.receiver_id.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Location -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.location.id }}" class="form-label fw-medium">
+                                <i class="fas fa-map-marker-alt me-1"></i>Location
+                            </label>
+                            {{ form.location(class="form-control") }}
+                            {% if form.location.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.location.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Device ID -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.device_id.id }}" class="form-label fw-medium">
+                                <i class="fas fa-mobile-alt me-1"></i>Device ID
+                            </label>
+                            {{ form.device_id(class="form-control") }}
+                            {% if form.device_id.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.device_id.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Merchant Category -->
+                    <div class="mb-4">
+                        <label for="{{ form.merchant_category.id }}" class="form-label fw-medium">
+                            <i class="fas fa-store me-1"></i>Merchant Category
+                        </label>
+                        {{ form.merchant_category(class="form-select") }}
+                        <div class="form-text">Select if this is a merchant transaction</div>
+                        {% if form.merchant_category.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.merchant_category.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Information Panel -->
+        <div class="card border-0 mt-4 bg-light">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    How Fraud Detection Works
+                </h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <div class="feature-icon bg-primary">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="mb-1">Machine Learning Analysis</h6>
+                                <p class="text-muted small mb-0">Advanced algorithms analyze transaction patterns and behaviors</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <div class="feature-icon bg-warning">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="mb-1">Real-time Processing</h6>
+                                <p class="text-muted small mb-0">Instant risk assessment and fraud probability calculation</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <div class="feature-icon bg-success">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="mb-1">Risk Scoring</h6>
+                                <p class="text-muted small mb-0">Comprehensive risk scores with detailed explanations</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

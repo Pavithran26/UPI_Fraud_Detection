@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Analysis - UPI Fraud Detection{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-10 col-lg-12">
+        <!-- Transaction Details Header -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-search-dollar me-2"></i>
+                        Transaction Analysis #{{ transaction.id }}
+                    </h3>
+                    <div class="transaction-status">
+                        {% if transaction.is_fraud %}
+                            <span class="badge bg-danger fs-6">
+                                <i class="fas fa-exclamation-triangle me-1"></i>FRAUD DETECTED
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-check-circle me-1"></i>LEGITIMATE
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="row">
+                    <!-- Risk Score Visualization -->
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center">
+                            <div class="risk-gauge mb-3">
+                                <div class="risk-circle" style="background: conic-gradient(
+                                    {% if transaction.risk_score > 0.7 %}#DC2626{% elif transaction.risk_score > 0.3 %}#D97706{% else %}#059669{% endif %} 0deg, 
+                                    {% if transaction.risk_score > 0.7 %}#DC2626{% elif transaction.risk_score > 0.3 %}#D97706{% else %}#059669{% endif %} {{ transaction.risk_score * 360 }}deg, 
+                                    #E5E7EB {{ transaction.risk_score * 360 }}deg
+                                );">
+                                    <div class="risk-inner">
+                                        <div class="risk-percentage">{{ "%.0f"|format(transaction.risk_score * 100) }}%</div>
+                                        <div class="risk-label">Risk Score</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h5 class="mb-0">
+                                {% if transaction.risk_score > 0.7 %}
+                                    <span class="text-danger">HIGH RISK</span>
+                                {% elif transaction.risk_score > 0.3 %}
+                                    <span class="text-warning">MEDIUM RISK</span>
+                                {% else %}
+                                    <span class="text-success">LOW RISK</span>
+                                {% endif %}
+                            </h5>
+                        </div>
+                    </div>
+                    
+                    <!-- Transaction Details -->
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-sm-6 mb-3">
+                                <label class="form-label small text-muted">Amount</label>
+                                <div class="fw-bold fs-4 text-primary">₹{{ "%.2f"|format(transaction.amount) }}</div>
+                            </div>
+                            <div class="col-sm-6 mb-3">
+                                <label class="form-label small text-muted">Transaction Type</label>
+                                <div class="fw-medium">{{ transaction.transaction_type }}</div>
+                            </div>
+                            <div class="col-sm-6 mb-3">
+                                <label class="form-label small text-muted">From</label>
+                                <div class="fw-medium text-truncate">{{ transaction.sender_id }}</div>
+                            </div>
+                            <div class="col-sm-6 mb-3">
+                                <label class="form-label small text-muted">To</label>
+                                <div class="fw-medium text-truncate">{{ transaction.receiver_id }}</div>
+                            </div>
+                            <div class="col-sm-6 mb-3">
+                                <label class="form-label small text-muted">Timestamp</label>
+                                <div class="fw-medium">{{ transaction.timestamp.strftime('%d %b %Y, %H:%M:%S') }}</div>
+                            </div>
+                            <div class="col-sm-6 mb-3">
+                                <label class="form-label small text-muted">Location</label>
+                                <div class="fw-medium">{{ transaction.location or 'Not specified' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Risk Analysis -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-analytics me-2"></i>Risk Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="mb-3">Risk Factors Identified:</h6>
+                        <ul class="list-unstyled">
+                            {% for reason in reasons %}
+                            <li class="mb-2">
+                                <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                                {{ reason }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        
+                        {% if transaction.merchant_category %}
+                        <div class="mt-4">
+                            <h6 class="mb-2">Merchant Information:</h6>
+                            <span class="badge bg-light text-dark">{{ transaction.merchant_category }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if transaction.device_id %}
+                        <div class="mt-3">
+                            <h6 class="mb-2">Device ID:</h6>
+                            <code class="small">{{ transaction.device_id }}</code>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alerts -->
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bell me-2"></i>Security Alerts
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if alerts %}
+                            {% for alert in alerts %}
+                            <div class="alert alert-{{ 'danger' if alert.severity == 'HIGH' else 'warning' if alert.severity == 'MEDIUM' else 'info' }} border-0 mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="fw-bold mb-1">{{ alert.alert_type.replace('_', ' ').title() }}</div>
+                                        <div class="small">{{ alert.message }}</div>
+                                        <div class="text-muted small mt-1">
+                                            {{ alert.timestamp.strftime('%d %b %Y, %H:%M') }}
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-{{ 'danger' if alert.severity == 'HIGH' else 'warning' if alert.severity == 'MEDIUM' else 'info' }}">
+                                        {{ alert.severity }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-3">
+                                <i class="fas fa-shield-alt text-success fa-2x mb-2"></i>
+                                <p class="text-muted mb-0">No security alerts for this transaction</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i>Back to Dashboard
+                    </a>
+                    <a href="{{ url_for('test_transaction') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-plus me-2"></i>Test Another Transaction
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.risk-gauge {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+}
+
+.risk-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.risk-inner {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.risk-percentage {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.risk-label {
+    font-size: 0.75rem;
+    color: #6B7280;
+    font-weight: 500;
+}
+</style>
+{% endblock %}

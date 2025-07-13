@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - UPI Fraud Detection{% endblock %}
+
+{% block content %}
+<div class="dashboard-header mb-4">
+    <h1 class="h2 mb-0">
+        <i class="fas fa-tachometer-alt me-2"></i>
+        Fraud Detection Dashboard
+    </h1>
+    <p class="text-muted">Real-time monitoring and analysis of UPI transactions</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="ms-3">
+                        <div class="stat-value">{{ stats.total_transactions }}</div>
+                        <div class="stat-label">Total Transactions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="ms-3">
+                        <div class="stat-value">{{ stats.fraud_transactions }}</div>
+                        <div class="stat-label">Fraud Detected</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-warning">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="ms-3">
+                        <div class="stat-value">{{ stats.fraud_rate }}%</div>
+                        <div class="stat-label">Fraud Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                    <div class="ms-3">
+                        <div class="stat-value">₹{{ "%.0f"|format(stats.avg_transaction_amount) }}</div>
+                        <div class="stat-label">Avg Amount</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Alerts Row -->
+<div class="row mb-4">
+    <!-- Transaction Volume Chart -->
+    <div class="col-xl-8 col-lg-7 mb-4">
+        <div class="card border-0 h-100">
+            <div class="card-header bg-transparent">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Transaction Volume (Last 24 Hours)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="transactionChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Alerts -->
+    <div class="col-xl-4 col-lg-5 mb-4">
+        <div class="card border-0 h-100">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bell me-2"></i>
+                    Recent Alerts
+                </h5>
+                <span class="badge bg-danger">{{ recent_alerts|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_alerts %}
+                    <div class="alert-list">
+                        {% for alert in recent_alerts %}
+                        <div class="alert-item p-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="alert-severity mb-1">
+                                        <span class="badge bg-{{ 'danger' if alert.severity == 'HIGH' else 'warning' if alert.severity == 'MEDIUM' else 'info' }}">
+                                            {{ alert.severity }}
+                                        </span>
+                                    </div>
+                                    <div class="alert-message small">{{ alert.message[:80] }}...</div>
+                                    <div class="alert-time text-muted small">
+                                        {{ alert.timestamp.strftime('%H:%M, %d %b') }}
+                                    </div>
+                                </div>
+                                <div class="alert-actions">
+                                    <form method="POST" action="{{ url_for('resolve_alert', alert_id=alert.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as resolved">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-shield-alt text-success fa-3x mb-3"></i>
+                        <p class="text-muted">No active alerts</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Recent Transactions
+                </h5>
+                <a href="{{ url_for('test_transaction') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>Test Transaction
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Amount</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Type</th>
+                                    <th>Risk Score</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in recent_transactions %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('transaction_result', transaction_id=transaction.id) }}" class="text-decoration-none">
+                                            #{{ transaction.id }}
+                                        </a>
+                                    </td>
+                                    <td class="fw-medium">₹{{ "%.2f"|format(transaction.amount) }}</td>
+                                    <td class="text-truncate" style="max-width: 120px;">{{ transaction.sender_id }}</td>
+                                    <td class="text-truncate" style="max-width: 120px;">{{ transaction.receiver_id }}</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ transaction.transaction_type }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="risk-score">
+                                            <span class="risk-value">{{ "%.1f"|format(transaction.risk_score * 100) }}%</span>
+                                            <div class="risk-bar">
+                                                <div class="risk-fill" 
+                                                     style="width: {{ transaction.risk_score * 100 }}%; 
+                                                            background-color: {% if transaction.risk_score > 0.7 %}#DC2626{% elif transaction.risk_score > 0.3 %}#D97706{% else %}#059669{% endif %};">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if transaction.is_fraud %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>Fraud
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Safe
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted small">
+                                        {{ transaction.timestamp.strftime('%H:%M') }}<br>
+                                        {{ transaction.timestamp.strftime('%d %b') }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-exchange-alt text-muted fa-3x mb-3"></i>
+                        <h5 class="text-muted">No transactions yet</h5>
+                        <p class="text-muted">Start by testing a transaction to see fraud detection in action.</p>
+                        <a href="{{ url_for('test_transaction') }}" class="btn btn-primary">
+                            <i class="fas fa-vial me-1"></i>Test Transaction
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Chart data from Flask
+const chartData = {{ chart_data|tojson }};
+
+// Initialize transaction volume chart
+const ctx = document.getElementById('transactionChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: chartData.hours,
+        datasets: [{
+            label: 'Transactions',
+            data: chartData.transaction_counts,
+            borderColor: '#1E3A8A',
+            backgroundColor: 'rgba(30, 58, 138, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0,0,0,0.1)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
